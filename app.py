@@ -389,68 +389,58 @@ if st.session_state.get("logged_in"):
                 st.markdown("### 📊 Visual Skills Analysis")
                 st.caption("Interactive visualization of your skill match across different roles")
                 
-                chart_type = st.radio("Select chart type:", ["Bar Chart", "Radar Chart"], horizontal=True)
+                chart_type = st.radio("Select chart type:", ["Bar Chart", "Table View"], horizontal=True)
                 
-                if st.button("📈 Generate Chart", type="primary", use_container_width=True):
+                if st.button("📈 Generate Analysis", type="primary", use_container_width=True):
                     try:
-                        import matplotlib.pyplot as plt
-                        import numpy as np
-                        from io import BytesIO
-                        
                         role_scores = {}
                         for role in get_all_job_roles():
                             suggestions = suggest_improvements(resume_data, role)
                             role_scores[role] = suggestions.get('match_percentage', 0)
                         
-                        sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)[:8]
-                        roles = [r[0] for r in sorted_roles]
-                        scores = [r[1] for r in sorted_roles]
-                        
-                        fig, ax = plt.subplots(figsize=(10, 6))
+                        sorted_roles = sorted(role_scores.items(), key=lambda x: x[1], reverse=True)
                         
                         if chart_type == "Bar Chart":
-                            colors_list = ['#667eea' if s >= 70 else '#fbbf24' if s >= 50 else '#ef4444' for s in scores]
-                            bars = ax.barh(roles, scores, color=colors_list)
-                            ax.set_xlabel('Match Percentage (%)', fontsize=12)
-                            ax.set_title('Resume Match Score by Role', fontsize=14, fontweight='bold')
-                            ax.set_xlim(0, 100)
+                            st.markdown("#### 📊 Skill Match by Role")
                             
-                            for i, (bar, score) in enumerate(zip(bars, scores)):
-                                ax.text(score + 2, i, f'{score:.1f}%', va='center', fontsize=10)
+                            for role, score in sorted_roles:
+                                color = "🟢" if score >= 70 else "🟡" if score >= 50 else "🔴"
+                                col1, col2, col3 = st.columns([3, 2, 1])
+                                
+                                with col1:
+                                    st.write(f"{color} **{role}**")
+                                with col2:
+                                    st.progress(score / 100)
+                                with col3:
+                                    st.write(f"**{score:.1f}%**")
                             
-                        else:  # Radar Chart
-                            angles = np.linspace(0, 2 * np.pi, len(roles), endpoint=False).tolist()
-                            scores_plot = scores + [scores[0]]
-                            angles += angles[:1]
+                            st.markdown("---")
+                            st.markdown("**Legend:** 🟢 Excellent (70%+) | 🟡 Good (50-69%) | 🔴 Needs Work (<50%)")
+                        
+                        else:  # Table View
+                            st.markdown("#### 📋 Detailed Score Table")
                             
-                            ax = plt.subplot(111, projection='polar')
-                            ax.plot(angles, scores_plot, 'o-', linewidth=2, color='#667eea')
-                            ax.fill(angles, scores_plot, alpha=0.25, color='#667eea')
-                            ax.set_xticks(angles[:-1])
-                            ax.set_xticklabels(roles, size=9)
-                            ax.set_ylim(0, 100)
-                            ax.set_title('Resume Skills Radar', fontsize=14, fontweight='bold', pad=20)
-                            ax.grid(True)
-                        
-                        plt.tight_layout()
-                        
-                        st.pyplot(fig)
-                        
-                        buf = BytesIO()
-                        plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                        buf.seek(0)
-                        st.download_button(
-                            "📥 Download Chart",
-                            buf,
-                            f"skills_chart_{chart_type.replace(' ', '_').lower()}.png",
-                            "image/png",
-                            use_container_width=True
-                        )
-                        plt.close()
+                            import pandas as pd
+                            df = pd.DataFrame(sorted_roles, columns=["Role", "Match Score (%)"])
+                            df["Rank"] = range(1, len(df) + 1)
+                            df = df[["Rank", "Role", "Match Score (%)"]]
+                            df["Rating"] = df["Match Score (%)"].apply(
+                                lambda x: "⭐⭐⭐" if x >= 70 else "⭐⭐" if x >= 50 else "⭐"
+                            )
+                            
+                            st.dataframe(df, use_container_width=True, hide_index=True)
+                            
+                            csv = df.to_csv(index=False)
+                            st.download_button(
+                                "📥 Download as CSV",
+                                csv,
+                                "skills_analysis.csv",
+                                "text/csv",
+                                use_container_width=True
+                            )
                         
                     except Exception as e:
-                        st.error(f"Error generating chart: {str(e)}")
-                        st.info("Install matplotlib with: pip install matplotlib")
+                        st.error(f"Error generating analysis: {str(e)}")
             
             with tab8:
                 st.markdown("### 💾 Analysis History & Learning Path")
