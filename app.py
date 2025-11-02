@@ -118,10 +118,9 @@ if st.session_state.get("logged_in"):
             st.success("✅ Resume processed successfully!")
 
 
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 "🎯 Job Matches", "📊 ATS Score Analysis",
-                "🔧 Resume Enhancement", "📄 Resume Preview", "🤖 AI Career Chatbot",
-                "📥 PDF Report", "📊 Skills Chart", "💾 History"
+                "📄 Resume Preview", "📥 PDF Report", "📊 Skills Chart"
             ])
 
 
@@ -385,7 +384,7 @@ if st.session_state.get("logged_in"):
                     else:
                         st.warning("Please select a role for the report.")
             
-            with tab7:
+            with tab5:
                 st.markdown("### 📊 Visual Skills Analysis")
                 st.caption("Interactive visualization of your skill match across different roles")
                 
@@ -452,7 +451,7 @@ if st.session_state.get("logged_in"):
                         st.error(f"Error generating chart: {str(e)}")
                         st.info("Install matplotlib with: pip install matplotlib")
             
-            with tab8:
+                st.markdown("---")
                 st.markdown("### 💾 Analysis History & Learning Path")
                 
                 if "analysis_history" not in st.session_state:
