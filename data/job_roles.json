@@ -1,8 +1,53 @@
 {
-    "Software Engineer": ["python", "java", "javascript", "react", "node.js", "docker", "kubernetes", "git", "sql", "mongodb", "aws"],
-    "Data Scientist": ["python", "machine learning", "deep learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "sql", "tableau"],
-    "Frontend Developer": ["html", "css", "javascript", "react", "vue", "angular", "typescript", "responsive design", "git"],
-    "Backend Developer": ["python", "java", "node.js", "express", "django", "flask", "rest api", "sql", "mongodb"],
-    "Full Stack Developer": ["javascript", "react", "node.js", "express", "mongodb", "sql", "html", "css", "git", "docker"],
-    "DevOps Engineer": ["docker", "kubernetes", "jenkins", "terraform", "aws", "azure", "linux", "bash", "python", "ci/cd"]
+    "Software Engineer": [
+        "python", "java", "javascript", "react", "node.js", "docker", 
+        "kubernetes", "git", "agile", "sql", "mongodb", "aws", "rest api",
+        "microservices", "spring boot", "django", "flask", "angular"
+    ],
+    "Data Scientist": [
+        "python", "machine learning", "deep learning", "tensorflow",
+        "pytorch", "pandas", "numpy", "scikit-learn", "sql", "tableau",
+        "statistics", "data visualization", "jupyter", "spark", "hadoop",
+        "r programming", "nlp", "computer vision"
+    ],
+    "Frontend Developer": [
+        "html", "css", "javascript", "react", "vue", "angular",
+        "typescript", "webpack", "responsive design", "ui/ux", "git",
+        "sass", "tailwind", "bootstrap", "redux", "next.js"
+    ],
+    "Backend Developer": [
+        "python", "java", "node.js", "express", "django", "flask",
+        "spring boot", "rest api", "graphql", "sql", "mongodb", "redis",
+        "postgresql", "mysql", "microservices", "aws", "docker"
+    ],
+    "Full Stack Developer": [
+        "javascript", "react", "node.js", "express", "mongodb",
+        "sql", "html", "css", "git", "docker", "aws", "rest api",
+        "python", "typescript", "redux", "postgresql"
+    ],
+    "DevOps Engineer": [
+        "docker", "kubernetes", "jenkins", "ansible", "terraform",
+        "aws", "azure", "gcp", "linux", "bash", "python", "ci/cd",
+        "git", "monitoring", "prometheus", "grafana"
+    ],
+    "Mobile Developer": [
+        "react native", "flutter", "swift", "kotlin", "java",
+        "android", "ios", "firebase", "rest api", "git",
+        "mobile ui/ux", "app deployment"
+    ],
+    "Cloud Architect": [
+        "aws", "azure", "gcp", "terraform", "docker", "kubernetes",
+        "microservices", "serverless", "ci/cd", "networking", 
+        "security", "devops", "infrastructure as code"
+    ],
+    "Machine Learning Engineer": [
+        "python", "tensorflow", "pytorch", "scikit-learn", "keras",
+        "deep learning", "nlp", "computer vision", "mlops", "docker",
+        "kubernetes", "aws", "git", "data engineering", "model deployment"
+    ],
+    "Product Manager": [
+        "product strategy", "roadmap", "agile", "scrum", "jira",
+        "user research", "analytics", "sql", "communication", 
+        "leadership", "market analysis", "stakeholder management"
+    ]
 }
