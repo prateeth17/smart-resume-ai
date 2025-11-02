@@ -1,27 +1,49 @@
 {
     "Software Engineer": [
         "python", "java", "javascript", "react", "node.js", "docker", 
-        "kubernetes", "git", "agile", "sql", "mongodb", "aws"
+        "kubernetes", "git", "agile", "sql", "mongodb", "aws", "rest api",
+        "microservices", "spring boot", "django", "flask"
     ],
     "Data Scientist": [
         "python", "machine learning", "deep learning", "tensorflow",
         "pytorch", "pandas", "numpy", "scikit-learn", "sql", "tableau",
-        "statistics", "data visualization", "jupyter"
+        "statistics", "data visualization", "jupyter", "spark", "hadoop"
     ],
     "Frontend Developer": [
         "html", "css", "javascript", "react", "vue", "angular",
-        "typescript", "webpack", "responsive design", "ui/ux", "git"
+        "typescript", "webpack", "responsive design", "ui/ux", "git",
+        "sass", "tailwind", "bootstrap"
     ],
     "Backend Developer": [
         "python", "java", "node.js", "express", "django", "flask",
-        "spring boot", "rest api", "graphql", "sql", "mongodb", "redis"
+        "spring boot", "rest api", "graphql", "sql", "mongodb", "redis",
+        "postgresql", "mysql"
     ],
     "Full Stack Developer": [
         "javascript", "react", "node.js", "express", "mongodb",
-        "sql", "html", "css", "git", "docker", "aws", "rest api"
+        "sql", "html", "css", "git", "docker", "aws", "rest api",
+        "python", "typescript"
     ],
     "DevOps Engineer": [
         "docker", "kubernetes", "jenkins", "ansible", "terraform",
-        "aws", "azure", "gcp", "linux", "bash", "python", "ci/cd"
+        "aws", "azure", "gcp", "linux", "bash", "python", "ci/cd",
+        "git", "monitoring"
+    ],
+    "Mobile Developer": [
+        "react native", "flutter", "swift", "kotlin", "java",
+        "android", "ios", "firebase", "rest api", "git"
+    ],
+    "Cloud Architect": [
+        "aws", "azure", "gcp", "terraform", "docker", "kubernetes",
+        "microservices", "serverless", "ci/cd", "networking", "security"
+    ],
+    "Machine Learning Engineer": [
+        "python", "tensorflow", "pytorch", "scikit-learn", "keras",
+        "deep learning", "nlp", "computer vision", "mlops", "docker",
+        "kubernetes", "aws", "git"
+    ],
+    "Product Manager": [
+        "product strategy", "roadmap", "agile", "scrum", "jira",
+        "user research", "analytics", "sql", "communication", "leadership"
     ]
 }
