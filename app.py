@@ -1,214 +1,328 @@
 import streamlit as st
 import re
-import io
 from datetime import datetime
+
+# Check imports
+PDF_OK = False
+ML_OK = False
+REPORT_OK = False
 
 try:
     import fitz
-    HAS_PDF = True
+    PDF_OK = True
 except:
-    HAS_PDF = False
+    pass
 
 try:
     from sklearn.feature_extraction.text import CountVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
-    HAS_SKLEARN = True
+    ML_OK = True
 except:
-    HAS_SKLEARN = False
+    pass
 
 try:
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import inch
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    HAS_REPORTLAB = True
+    from io import BytesIO
+    REPORT_OK = True
 except:
-    HAS_REPORTLAB = False
+    pass
 
-JOB_DATA = {
-    "Software Engineer": ["python", "java", "javascript", "react", "node.js", "docker", "kubernetes", "git", "sql", "mongodb", "aws"],
-    "Data Scientist": ["python", "machine learning", "tensorflow", "pytorch", "pandas", "numpy", "scikit-learn", "sql", "tableau"],
-    "Frontend Developer": ["html", "css", "javascript", "react", "vue", "angular", "typescript", "webpack", "git"],
-    "Backend Developer": ["python", "java", "node.js", "express", "django", "flask", "rest api", "sql", "mongodb"],
-    "Full Stack Developer": ["javascript", "react", "node.js", "express", "mongodb", "sql", "html", "css", "docker"],
-    "DevOps Engineer": ["docker", "kubernetes", "jenkins", "terraform", "aws", "azure", "linux", "bash", "ci/cd"],
-    "Mobile Developer": ["react native", "flutter", "swift", "kotlin", "android", "ios", "firebase", "git"],
-    "Cloud Architect": ["aws", "azure", "gcp", "terraform", "docker", "kubernetes", "serverless", "networking"],
-    "ML Engineer": ["python", "tensorflow", "pytorch", "scikit-learn", "deep learning", "mlops", "docker"],
-    "Product Manager": ["product strategy", "roadmap", "agile", "jira", "analytics", "sql", "communication"]
+# Job database
+JOBS = {
+    "Software Engineer": ["python", "java", "javascript", "react", "nodejs", "docker", "git", "sql", "aws"],
+    "Data Scientist": ["python", "machine learning", "pandas", "numpy", "tensorflow", "sql", "statistics"],
+    "Frontend Developer": ["html", "css", "javascript", "react", "vue", "angular", "typescript"],
+    "Backend Developer": ["python", "java", "nodejs", "sql", "mongodb", "api", "rest"],
+    "Full Stack Developer": ["javascript", "react", "nodejs", "sql", "mongodb", "docker", "git"],
+    "DevOps Engineer": ["docker", "kubernetes", "jenkins", "aws", "linux", "bash", "terraform"],
 }
 
-def extract_pdf(file):
-    if not HAS_PDF:
-        return "ERROR: PDF reader missing"
+def get_text(pdf_file):
+    if not PDF_OK:
+        return "Error: PDF library not loaded"
     try:
-        file.seek(0)
-        doc = fitz.open(stream=file.read(), filetype="pdf")
-        text = ""
-        for page in doc:
-            text += page.get_text()
+        pdf_file.seek(0)
+        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+        txt = ""
+        for p in doc:
+            txt += p.get_text()
         doc.close()
-        return text.strip() if text else "ERROR: No text"
+        return txt.strip()
     except Exception as e:
-        return f"ERROR: {e}"
+        return f"Error: {str(e)}"
 
-def analyze(text):
-    if not HAS_SKLEARN:
-        return simple_match(text)
-    matches = []
-    for job, skills in JOB_DATA.items():
+def match_jobs(txt):
+    if not ML_OK:
+        return basic_match(txt)
+    
+    result = []
+    txt_low = txt.lower()
+    
+    for job_name, skills in JOBS.items():
         try:
+            job_txt = " ".join(skills)
             vec = CountVectorizer()
-            v = vec.fit_transform([text.lower(), " ".join(skills)])
-            sim = cosine_similarity(v)[0][1]
-            matches.append({"job": job, "score": round(sim * 100, 2)})
+            matrix = vec.fit_transform([txt_low, job_txt.lower()])
+            score = cosine_similarity(matrix)[0][1] * 100
+            result.append({"name": job_name, "score": round(score, 1)})
         except:
-            pass
-    matches.sort(key=lambda x: x["score"], reverse=True)
-    return matches
+            continue
+    
+    result.sort(key=lambda x: x["score"], reverse=True)
+    return result
 
-def simple_match(text):
-    words = set(re.findall(r'\b\w+\b', text.lower()))
-    matches = []
-    for job, skills in JOB_DATA.items():
-        count = sum(1 for s in skills if s in words)
-        score = round((count / len(skills)) * 100, 2)
-        matches.append({"job": job, "score": score})
-    matches.sort(key=lambda x: x["score"], reverse=True)
-    return matches
+def basic_match(txt):
+    words = set(txt.lower().split())
+    result = []
+    
+    for job_name, skills in JOBS.items():
+        matches = sum(1 for s in skills if s.lower() in words)
+        score = (matches / len(skills)) * 100
+        result.append({"name": job_name, "score": round(score, 1)})
+    
+    result.sort(key=lambda x: x["score"], reverse=True)
+    return result
 
-def check_skills(text, role):
-    skills = JOB_DATA.get(role, [])
-    words = set(re.findall(r'\b\w+\b', text.lower()))
-    present = [s for s in skills if s in words]
-    missing = [s for s in skills if s not in words]
-    return present, missing
+def find_skills(txt, role):
+    if role not in JOBS:
+        return [], []
+    
+    skills = JOBS[role]
+    words = set(txt.lower().split())
+    
+    have = [s for s in skills if s.lower() in words]
+    need = [s for s in skills if s.lower() not in words]
+    
+    return have, need
 
-def make_pdf(text, present, missing, role, user):
-    if not HAS_REPORTLAB:
+def create_pdf(txt, have, need, role, username):
+    if not REPORT_OK:
         return None
+    
     try:
-        buf = io.BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=letter, rightMargin=0.75*inch, leftMargin=0.75*inch, topMargin=0.75*inch, bottomMargin=0.75*inch)
-        els = []
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        story = []
         styles = getSampleStyleSheet()
         
-        els.append(Paragraph("<b>RESUME REPORT</b>", styles['Title']))
-        els.append(Spacer(1, 0.2*inch))
-        els.append(Paragraph(f"<b>Role:</b> {role}<br/><b>User:</b> {user}<br/><b>Date:</b> {datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
-        els.append(Spacer(1, 0.3*inch))
+        story.append(Paragraph("<b>Resume Enhancement Report</b>", styles['Title']))
+        story.append(Spacer(1, 0.3*inch))
         
-        if present:
-            els.append(Paragraph("<b>Current Skills:</b>", styles['Heading2']))
-            els.append(Paragraph(", ".join(present[:20]), styles['Normal']))
-            els.append(Spacer(1, 0.2*inch))
+        info = f"<b>Candidate:</b> {username}<br/><b>Target Role:</b> {role}<br/><b>Date:</b> {datetime.now().strftime('%B %d, %Y')}"
+        story.append(Paragraph(info, styles['Normal']))
+        story.append(Spacer(1, 0.3*inch))
         
-        if missing:
-            els.append(Paragraph("<b>Add These Skills:</b>", styles['Heading2']))
-            els.append(Paragraph(", ".join(missing[:20]), styles['Normal']))
-            els.append(Spacer(1, 0.2*inch))
+        if have:
+            story.append(Paragraph("<b>Skills You Have:</b>", styles['Heading2']))
+            story.append(Paragraph(", ".join(have), styles['Normal']))
+            story.append(Spacer(1, 0.2*inch))
         
-        els.append(Paragraph("<b>Summary:</b>", styles['Heading2']))
-        els.append(Paragraph(" ".join(text.split()[:150]) + "...", styles['Normal']))
+        if need:
+            story.append(Paragraph("<b>Skills to Add:</b>", styles['Heading2']))
+            story.append(Paragraph(", ".join(need), styles['Normal']))
+            story.append(Spacer(1, 0.2*inch))
         
-        doc.build(els)
-        return buf.getvalue()
+        story.append(Paragraph("<b>Summary:</b>", styles['Heading2']))
+        summary = " ".join(txt.split()[:100]) + "..."
+        story.append(Paragraph(summary, styles['Normal']))
+        
+        doc.build(story)
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        return pdf_data
     except:
         return None
 
-st.set_page_config(page_title="Resume System", page_icon="📄", layout="wide")
+# Page setup
+st.set_page_config(page_title="Resume App", page_icon="📄", layout="wide")
 
+# Header
 st.markdown("""
-<div style='text-align:center;background:linear-gradient(135deg,#667eea,#764ba2);padding:1.5rem;border-radius:10px;color:white;margin-bottom:2rem;'>
+<div style='background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); 
+padding: 2rem; border-radius: 10px; text-align: center; color: white; margin-bottom: 2rem;'>
 <h1>🧠 Smart Resume Enhancement System</h1>
-<p>AI-Powered Job Matching & Skill Analysis</p>
+<p style='font-size: 1.1rem; margin: 0;'>AI-Powered Career Analysis</p>
 </div>
 """, unsafe_allow_html=True)
 
+# Sidebar
 with st.sidebar:
-    st.header("🔐 Login")
-    if "logged" not in st.session_state:
-        st.session_state.logged = False
+    st.header("🔐 Access")
     
-    if not st.session_state.logged:
-        user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
-        c1, c2 = st.columns(2)
-        with c1:
+    if "user" not in st.session_state:
+        st.session_state.user = None
+    
+    if not st.session_state.user:
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        
+        col1, col2 = st.columns(2)
+        with col1:
             if st.button("Login", use_container_width=True):
-                if user and pwd:
-                    st.session_state.logged = True
-                    st.session_state.user = user
+                if username and password:
+                    st.session_state.user = username
                     st.rerun()
-        with c2:
+        with col2:
             if st.button("Demo", use_container_width=True):
-                st.session_state.logged = True
-                st.session_state.user = "Demo"
+                st.session_state.user = "Demo User"
                 st.rerun()
     else:
         st.success(f"👤 {st.session_state.user}")
-        st.metric("Roles", len(JOB_DATA))
+        st.metric("Job Roles", len(JOBS))
+        
+        st.markdown("**Status:**")
+        st.write("✅ PDF Reader" if PDF_OK else "❌ PDF Reader")
+        st.write("✅ ML Engine" if ML_OK else "❌ ML Engine")
+        st.write("✅ PDF Generator" if REPORT_OK else "❌ PDF Generator")
+        
         if st.button("Logout", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
-if st.session_state.get("logged"):
-    st.markdown("### 📂 Upload Resume PDF")
-    up = st.file_uploader("Choose PDF", type=["pdf"])
+# Main app
+if st.session_state.get("user"):
     
-    if up:
-        with st.spinner("Analyzing..."):
-            text = extract_pdf(up)
+    st.subheader("📂 Upload Your Resume")
+    file = st.file_uploader("Choose PDF file", type=["pdf"])
+    
+    if file:
+        with st.spinner("Processing..."):
+            text = get_text(file)
         
-        if not text.startswith("ERROR"):
-            st.success("✅ Resume processed!")
+        if not text.startswith("Error"):
+            st.success("✅ Resume loaded successfully!")
             
-            t1, t2, t3, t4 = st.tabs(["🎯 Jobs", "🔧 Skills", "📄 Text", "📥 PDF"])
+            st.session_state.text = text
+            st.session_state.jobs = match_jobs(text)
             
-            with t1:
-                st.subheader("Top Job Matches")
-                jobs = analyze(text)
-                for i, j in enumerate(jobs[:6], 1):
-                    s = j["score"]
-                    e = "🟢" if s >= 70 else "🟡" if s >= 50 else "🔴"
-                    with st.expander(f"{e} {i}. {j['job']} - {s}%"):
-                        st.progress(s/100)
-                        for b, u in {"LinkedIn": f"https://linkedin.com/jobs/search?keywords={j['job']}", "Indeed": f"https://indeed.com/jobs?q={j['job']}"}.items():
-                            st.markdown(f"[{b}]({u})")
+            tab1, tab2, tab3, tab4 = st.tabs(["🎯 Jobs", "🔧 Skills", "📄 Text", "📥 Report"])
             
-            with t2:
-                st.subheader("Skill Analysis")
-                role = st.selectbox("Role:", list(JOB_DATA.keys()))
-                if st.button("Analyze", type="primary"):
-                    p, m = check_skills(text, role)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.markdown("**✅ Have:**")
-                        for x in p: st.write(f"• {x}")
-                    with c2:
-                        st.markdown("**⚠️ Need:**")
-                        for x in m: st.write(f"• {x}")
-                    st.session_state.analysis = {"role": role, "p": p, "m": m, "t": text}
+            with tab1:
+                st.markdown("### Top Matching Roles")
+                
+                for i, job in enumerate(st.session_state.jobs[:5], 1):
+                    score = job["score"]
+                    color = "🟢" if score >= 70 else "🟡" if score >= 50 else "🔴"
+                    
+                    with st.expander(f"{color} {i}. {job['name']} ({score}%)"):
+                        st.progress(score / 100)
+                        
+                        cols = st.columns(3)
+                        links = {
+                            "LinkedIn": f"https://linkedin.com/jobs/search?keywords={job['name']}",
+                            "Indeed": f"https://indeed.com/jobs?q={job['name']}",
+                            "Glassdoor": f"https://glassdoor.com/Job/{job['name']}-jobs-SRCH_KO0,20.htm"
+                        }
+                        
+                        for idx, (site, url) in enumerate(links.items()):
+                            with cols[idx]:
+                                st.markdown(f"[🔗 {site}]({url})")
             
-            with t3:
-                st.subheader("Resume Text")
-                st.text_area("Content", text, height=300)
-                st.download_button("Download", text, "resume.txt")
+            with tab2:
+                st.markdown("### Skill Gap Analysis")
+                
+                role = st.selectbox("Select target role:", list(JOBS.keys()))
+                
+                if st.button("Analyze Skills", type="primary", use_container_width=True):
+                    have, need = find_skills(text, role)
+                    
+                    total = len(have) + len(need)
+                    match_pct = round((len(have) / total * 100), 1) if total > 0 else 0
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("✅ Have", len(have))
+                    with col2:
+                        st.metric("📚 Need", len(need))
+                    with col3:
+                        st.metric("🎯 Match", f"{match_pct}%")
+                    
+                    st.markdown("---")
+                    
+                    col_a, col_b = st.columns(2)
+                    
+                    with col_a:
+                        st.markdown("**✅ Your Skills:**")
+                        if have:
+                            for skill in have:
+                                st.write(f"• {skill}")
+                        else:
+                            st.write("None found")
+                    
+                    with col_b:
+                        st.markdown("**⚠️ Add These:**")
+                        if need:
+                            for skill in need:
+                                st.write(f"• {skill}")
+                        else:
+                            st.write("All present!")
+                    
+                    st.session_state.analysis = {
+                        "role": role,
+                        "have": have,
+                        "need": need
+                    }
             
-            with t4:
-                st.subheader("Generate PDF Report")
+            with tab3:
+                st.markdown("### Resume Content")
+                
+                words = len(text.split())
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Words", words)
+                with col2:
+                    st.metric("Characters", len(text))
+                
+                st.text_area("Extracted Text", text, height=300)
+                st.download_button("📥 Download", text, "resume.txt", use_container_width=True)
+            
+            with tab4:
+                st.markdown("### PDF Report")
+                
                 if "analysis" in st.session_state:
                     a = st.session_state.analysis
-                    if st.button("Generate PDF", type="primary"):
-                        pdf = make_pdf(a["t"], a["p"], a["m"], a["role"], st.session_state.user)
+                    
+                    st.success(f"Ready to generate report for: **{a['role']}**")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Current Skills", len(a['have']))
+                    with col2:
+                        st.metric("Skills to Add", len(a['need']))
+                    
+                    if st.button("🎨 Generate PDF", type="primary", use_container_width=True):
+                        pdf = create_pdf(text, a['have'], a['need'], a['role'], st.session_state.user)
+                        
                         if pdf:
-                            st.download_button("Download PDF", pdf, f"report_{a['role']}.pdf", "application/pdf")
+                            st.success("✅ PDF created!")
+                            st.download_button(
+                                "📥 Download PDF Report",
+                                pdf,
+                                f"resume_report_{a['role'].replace(' ', '_')}.pdf",
+                                "application/pdf",
+                                use_container_width=True
+                            )
+                        else:
+                            st.error("PDF generation failed")
                 else:
-                    st.info("Analyze skills first")
+                    st.info("👆 Analyze skills first in the Skills tab")
+        
         else:
             st.error(text)
+
 else:
-    st.info("👈 Login to start")
+    st.info("👈 Please login using the sidebar")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.info("**📄 PDF Upload**\nExtract resume text")
+    with col2:
+        st.success("**🎯 Job Matching**\nFind best roles")
+    with col3:
+        st.warning("**🔧 Skill Analysis**\nIdentify gaps")
 
 st.markdown("---")
-st.markdown("<p style='text-align:center;'>© 2025 Resume System</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#888;'>© 2025 Smart Resume Enhancement System</p>", unsafe_allow_html=True)
