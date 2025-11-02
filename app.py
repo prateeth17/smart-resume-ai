@@ -244,9 +244,11 @@ if st.session_state.get("logged_in"):
                             try:
                                 results = []
                                 with DDGS() as ddgs:
-                                    for r in ddgs.text(user_input, region="us-en", safesearch="moderate", max_results=3):
-                                        if r and "title" in r and r["title"]:
-                                            results.append(r)
+                                    search_results = ddgs.text(user_input, region="wt-wt", safesearch="moderate", max_results=3)
+                                    for r in search_results:
+                                        if r and "title" in r and "href" in r and "body" in r:
+                                            if r["title"] and r["href"] and r["body"]:
+                                                results.append(r)
 
 
                                 if results:
