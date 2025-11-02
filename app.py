@@ -47,8 +47,6 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "username" not in st.session_state:
     st.session_state["username"] = ""
-if "analysis_history" not in st.session_state:
-    st.session_state["analysis_history"] = []
 
 # ===================== SIDEBAR - LOGIN =====================
 with st.sidebar:
@@ -99,14 +97,14 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
         if resume_data:
             st.success("✅ Resume processed successfully!")
             
-            # ===================== TABS (Enhancement Removed) =====================
+            # ===================== TABS =====================
             tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "🎯 Job Matches",
                 "📊 ATS Score",
                 "📄 Preview",
                 "📥 PDF Report",
                 "📊 Skills Chart",
-                "💾 History"
+                "🎓 Learning & Career"
             ])
             
             # ==================== TAB 1: JOB MATCHES ====================
@@ -366,43 +364,10 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
                     except Exception as e:
                         st.error(f"Error generating analysis: {str(e)}")
             
-            # ==================== TAB 6: HISTORY & LEARNING PATH ====================
+            # ==================== TAB 6: LEARNING & CAREER (History Removed) ====================
             with tab6:
-                st.markdown("### 💾 Analysis History")
-                
-                if st.button("💾 Save Current Analysis", use_container_width=True):
-                    if matched_jobs:
-                        from datetime import datetime
-                        history_entry = {
-                            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "filename": uploaded_file.name,
-                            "top_match": matched_jobs[0]["job"],
-                            "top_score": matched_jobs[0]["similarity"],
-                            "total_matches": len(matched_jobs)
-                        }
-                        st.session_state["analysis_history"].append(history_entry)
-                        st.success("✅ Analysis saved to history!")
-                
-                if st.session_state["analysis_history"]:
-                    st.markdown("#### 📜 Your Resume Analysis History")
-                    for i, entry in enumerate(reversed(st.session_state["analysis_history"]), 1):
-                        with st.expander(f"Analysis #{len(st.session_state['analysis_history']) - i + 1} - {entry['date']}"):
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                st.metric("File", entry['filename'])
-                            with col2:
-                                st.metric("Top Match", entry['top_match'])
-                            with col3:
-                                st.metric("Score", f"{entry['top_score']}%")
-                    
-                    if st.button("🗑️ Clear History", use_container_width=True):
-                        st.session_state["analysis_history"] = []
-                        st.rerun()
-                else:
-                    st.info("No analysis history yet. Upload and analyze a resume to get started!")
-                
-                st.markdown("---")
                 st.markdown("### 🎓 Personalized Learning Path")
+                st.caption("Get customized learning recommendations based on your target role")
                 
                 learning_role = st.selectbox(
                     "Select role for learning recommendations:",
@@ -414,6 +379,20 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
                     if learning_role:
                         suggestions = suggest_improvements(resume_data, learning_role)
                         missing = suggestions["missing_skills"]
+                        present = suggestions["present_skills"]
+                        
+                        # Show current status
+                        st.markdown("#### 📊 Your Current Status")
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("✅ Skills You Have", len(present))
+                        with col2:
+                            st.metric("📚 Skills to Learn", len(missing))
+                        with col3:
+                            match_pct = suggestions.get('match_percentage', 0)
+                            st.metric("🎯 Match Score", f"{match_pct}%")
+                        
+                        st.markdown("---")
                         
                         if missing:
                             st.success(f"🎯 Learning path for **{learning_role}**")
@@ -436,6 +415,10 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
                                     "courses": ["React - The Complete Guide (Udemy)", "React Specialization (Coursera)"],
                                     "cert": "Meta React Developer Certificate"
                                 },
+                                "nodejs": {
+                                    "courses": ["Node.js - The Complete Guide (Udemy)", "Node.js API Development (Coursera)"],
+                                    "cert": "Node.js Certified Developer"
+                                },
                                 "docker": {
                                     "courses": ["Docker Mastery (Udemy)", "Docker for Beginners (freeCodeCamp)"],
                                     "cert": "Docker Certified Associate"
@@ -452,46 +435,34 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
                                     "courses": ["Machine Learning by Andrew Ng (Coursera)", "Deep Learning Specialization"],
                                     "cert": "TensorFlow Developer Certificate"
                                 },
+                                "kubernetes": {
+                                    "courses": ["Kubernetes for Developers (Udemy)", "Kubernetes Fundamentals (Linux Foundation)"],
+                                    "cert": "Certified Kubernetes Application Developer"
+                                }
                             }
                             
-                            # Display top 5 missing skills
+                            # Display top 5 missing skills with resources
+                            st.markdown("### 📖 Recommended Learning Resources")
+                            
                             for i, skill in enumerate(missing[:5], 1):
                                 st.markdown(f"#### {i}. {skill.title()}")
                                 
                                 if skill.lower() in learning_resources:
                                     resource = learning_resources[skill.lower()]
-                                    st.markdown("**📖 Recommended Courses:**")
-                                    for course in resource["courses"]:
-                                        st.write(f"• {course}")
-                                    st.markdown(f"**🏆 Certification:** {resource['cert']}")
+                                    
+                                    col1, col2 = st.columns([2, 1])
+                                    with col1:
+                                        st.markdown("**📚 Recommended Courses:**")
+                                        for course in resource["courses"]:
+                                            st.write(f"• {course}")
+                                    with col2:
+                                        st.markdown("**🏆 Certification:**")
+                                        st.info(resource['cert'])
                                 else:
                                     st.markdown(f"**📖 Search for:** '{skill} online courses', '{skill} certification'")
                                     st.markdown(f"**💡 Practice:** Build projects using {skill}")
                                 
                                 st.markdown("---")
-                            
-                            # Interview prep tips
-                            st.markdown("### 📅 Interview Preparation Tips")
-                            st.info(f"""
-                            **Common Interview Questions for {learning_role}:**
-                            
-                            **1. Technical Questions:**
-                            - Explain your experience with {', '.join(missing[:3])}
-                            - Walk me through a challenging project
-                            - How do you stay updated with new technologies?
-                            
-                            **2. Behavioral Questions:**
-                            - Describe a time you solved a difficult problem
-                            - How do you handle tight deadlines?
-                            - Tell me about a time you worked in a team
-                            
-                            **3. Preparation Strategy:**
-                            - Practice coding problems on LeetCode/HackerRank
-                            - Review STAR method for behavioral questions
-                            - Research the company and role thoroughly
-                            - Prepare thoughtful questions for the interviewer
-                            - Do mock interviews with peers
-                            """)
                         else:
                             st.success(f"🎉 You already have all key skills for {learning_role}!")
                             st.info("""
@@ -502,8 +473,67 @@ if st.session_state.get("logged_in") and RESUME_AI_OK:
                             - Network with professionals in the field
                             - Consider leadership or specialized roles
                             """)
+                        
+                        # Interview Preparation Tips (Always shown)
+                        st.markdown("---")
+                        st.markdown("### 📅 Interview Preparation Tips")
+                        
+                        st.info(f"""
+                        **Common Interview Questions for {learning_role}:**
+                        
+                        **1. Technical Questions:**
+                        - Explain your experience with {', '.join(missing[:3] if missing else present[:3])}
+                        - Walk me through a challenging project you've worked on
+                        - How do you stay updated with new technologies and industry trends?
+                        - Describe your development workflow and tools you use
+                        
+                        **2. Behavioral Questions:**
+                        - Describe a time you solved a difficult technical problem
+                        - How do you handle tight deadlines and pressure?
+                        - Tell me about a time you worked effectively in a team
+                        - Share an example of when you had to learn something quickly
+                        
+                        **3. Preparation Strategy:**
+                        - Practice coding problems on LeetCode/HackerRank daily
+                        - Review STAR method (Situation, Task, Action, Result) for behavioral questions
+                        - Research the company culture, products, and recent news
+                        - Prepare thoughtful questions to ask the interviewer
+                        - Do mock interviews with peers or mentors
+                        - Review your resume and be ready to discuss every point
+                        - Prepare a 2-minute "tell me about yourself" pitch
+                        
+                        **4. Day Before Interview:**
+                        - Get good sleep (7-8 hours)
+                        - Prepare your outfit and documents
+                        - Test your technology (for virtual interviews)
+                        - Review your notes and the job description
+                        - Plan to arrive 10-15 minutes early
+                        """)
+                        
+                        # Additional Career Tips
+                        st.markdown("### 💼 Career Development Tips")
+                        st.success("""
+                        **Boost Your Career:**
+                        
+                        **Networking:**
+                        - Connect with professionals on LinkedIn
+                        - Attend industry meetups and conferences
+                        - Join relevant online communities (Reddit, Discord, Slack)
+                        
+                        **Portfolio Building:**
+                        - Create a GitHub profile with quality projects
+                        - Write technical blog posts about your learning
+                        - Contribute to open-source projects
+                        
+                        **Continuous Learning:**
+                        - Follow industry leaders on social media
+                        - Subscribe to relevant newsletters and podcasts
+                        - Take on side projects to practice new skills
+                        - Participate in hackathons and coding challenges
+                        """)
+                        
                     else:
-                        st.warning("Please select a role.")
+                        st.warning("⚠️ Please select a role to get personalized recommendations.")
         
         else:
             st.error("Could not extract text from the PDF. Please try again with a different file.")
@@ -518,7 +548,7 @@ elif not st.session_state.get("logged_in"):
     </div>
     """, unsafe_allow_html=True)
     
-    # Feature showcase - FIXED WITH BLACK TEXT
+    # Feature showcase - BLACK TEXT
     col1, col2, col3 = st.columns(3)
     
     with col1:
