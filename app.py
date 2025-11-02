@@ -9,7 +9,31 @@ st.set_page_config(page_title="Smart Resume Enhancement", page_icon="📄", layo
 
 
 # ===================== DARK/LIGHT MODE =====================
+if "theme_mode" not in st.session_state:
+    st.session_state["theme_mode"] = "Default"  # Default to cream mode
 
+theme_mode = st.sidebar.radio(
+    "🎨 Theme Mode",
+    options=["Default", "Light", "Dark"],
+    index=["Default", "Light", "Dark"].index(st.session_state["theme_mode"]),
+    horizontal=True
+)
+st.session_state["theme_mode"] = theme_mode
+
+if st.session_state["theme_mode"] == "Light":
+    st.markdown("""
+        <style>
+        .stApp { background-color: #FFFFFF !important; color: #1F1F1F !important; }
+        .stMarkdown { color: #1F1F1F !important; }
+        </style>
+    """, unsafe_allow_html=True)
+elif st.session_state["theme_mode"] == "Dark":
+    st.markdown("""
+        <style>
+        .stApp { background-color: #0E1117 !important; color: #FAFAFA !important; }
+        .stMarkdown { color: #FAFAFA !important; }
+        </style>
+    """, unsafe_allow_html=True)
 
 
 # ===================== HEADER =====================
@@ -94,9 +118,10 @@ if st.session_state.get("logged_in"):
             st.success("✅ Resume processed successfully!")
 
 
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
                 "🎯 Job Matches", "📊 ATS Score Analysis",
-                "📄 Resume Preview", "📥 PDF Report", "📊 Skills Chart"
+                "🔧 Resume Enhancement", "📄 Resume Preview", "🤖 AI Career Chatbot",
+                "📥 PDF Report", "📊 Skills Chart", "💾 History"
             ])
 
 
@@ -360,7 +385,7 @@ if st.session_state.get("logged_in"):
                     else:
                         st.warning("Please select a role for the report.")
             
-            with tab5:
+            with tab7:
                 st.markdown("### 📊 Visual Skills Analysis")
                 st.caption("Interactive visualization of your skill match across different roles")
                 
@@ -427,12 +452,8 @@ if st.session_state.get("logged_in"):
                         st.error(f"Error generating chart: {str(e)}")
                         st.info("Install matplotlib with: pip install matplotlib")
             
-                st.markdown("---")
+            with tab8:
                 st.markdown("### 💾 Analysis History & Learning Path")
-Removed 3 features as requested:
-1. **Theme Toggle** - Removed all Dark/Light/Default mode selection and styling code
-2. **Resume Enhancement Tab** - Removed Tab 3 (skill gap analysis section)
-3. **AI Career Chatbot Tab** - Removed Tab 5 (DuckDuckGo search chatbot)
                 
                 if "analysis_history" not in st.session_state:
                     st.session_state["analysis_history"] = []
