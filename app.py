@@ -9,15 +9,18 @@ st.set_page_config(page_title="Smart Resume Enhancement", page_icon="📄", layo
 
 
 # ===================== DARK/LIGHT MODE =====================
-if "dark_mode" not in st.session_state:
-    st.session_state["dark_mode"] = False
+if "theme_mode" not in st.session_state:
+    st.session_state["theme_mode"] = "Light"  # Default to Light mode
 
+theme_mode = st.sidebar.radio(
+    "🎨 Theme Mode",
+    options=["Light", "Dark"],
+    index=0 if st.session_state["theme_mode"] == "Light" else 1,
+    horizontal=True
+)
+st.session_state["theme_mode"] = theme_mode
 
-theme_toggle = st.sidebar.checkbox("🌗 Dark Mode", value=st.session_state["dark_mode"])
-st.session_state["dark_mode"] = theme_toggle
-
-
-if st.session_state["dark_mode"]:
+if st.session_state["theme_mode"] == "Dark":
     st.markdown("""
         <style>
         body { background-color: #0E1117; color: #FAFAFA; }
