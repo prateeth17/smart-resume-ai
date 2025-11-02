@@ -1,0 +1,27 @@
+{
+    "Software Engineer": [
+        "python", "java", "javascript", "react", "node.js", "docker", 
+        "kubernetes", "git", "agile", "sql", "mongodb", "aws"
+    ],
+    "Data Scientist": [
+        "python", "machine learning", "deep learning", "tensorflow",
+        "pytorch", "pandas", "numpy", "scikit-learn", "sql", "tableau",
+        "statistics", "data visualization", "jupyter"
+    ],
+    "Frontend Developer": [
+        "html", "css", "javascript", "react", "vue", "angular",
+        "typescript", "webpack", "responsive design", "ui/ux", "git"
+    ],
+    "Backend Developer": [
+        "python", "java", "node.js", "express", "django", "flask",
+        "spring boot", "rest api", "graphql", "sql", "mongodb", "redis"
+    ],
+    "Full Stack Developer": [
+        "javascript", "react", "node.js", "express", "mongodb",
+        "sql", "html", "css", "git", "docker", "aws", "rest api"
+    ],
+    "DevOps Engineer": [
+        "docker", "kubernetes", "jenkins", "ansible", "terraform",
+        "aws", "azure", "gcp", "linux", "bash", "python", "ci/cd"
+    ]
+}
